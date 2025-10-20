@@ -6,6 +6,7 @@ import {
   InvoicesTable,
   LatestInvoiceRaw,
   Revenue,
+  FormattedCustomersTable
 } from './definitions';
 import { formatCurrency } from './utils';
 
@@ -213,5 +214,32 @@ export async function fetchFilteredCustomers(query: string) {
   } catch (err) {
     console.error('Database Error:', err);
     throw new Error('Failed to fetch customer table.');
+  }
+}
+
+// data for customers router
+
+export async function fetchAllCustomers() {
+  try {
+    const { rows } = await sql<FormattedCustomersTable>`
+      SELECT
+        c.id,
+        c.name,
+        c.email,
+        c.image_url,
+        COUNT(i.id) AS total_invoices,
+        COALESCE(SUM(CASE WHEN i.status = 'pending' THEN i.amount ELSE 0 END), 0)::text AS total_pending,
+        COALESCE(SUM(CASE WHEN i.status = 'paid' THEN i.amount ELSE 0 END), 0)::text AS total_paid
+      FROM customers c
+      LEFT JOIN invoices i ON c.id = i.customer_id
+      GROUP BY c.id, c.name, c.email, c.image_url
+      ORDER BY c.name;
+    `;
+
+    return rows;
+  } catch (error) {
+    console.error('❌ Error fetching customers:', error);
+    // You can throw or return an empty array depending on what you prefer
+    throw new Error('Failed to fetch customers');
   }
 }

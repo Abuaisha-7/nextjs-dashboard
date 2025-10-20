@@ -23,11 +23,8 @@ export default async function Page(props: {
  
 
   return (
-  
-      <Suspense>
-        <Table query={query} currentPage={currentPage} />
-       
-     
-   </Suspense>
+    <Suspense key={query + currentPage} fallback={<div>Loading...</div>}>
+      <Table query={query} currentPage={currentPage} />
+    </Suspense>
   );
 }

@@ -219,7 +219,11 @@ export async function fetchFilteredCustomers(query: string) {
 
 // data for customers router
 
-export async function fetchAllCustomers() {
+export async function fetchAllCustomers(query: string,
+  currentPage: number,) {
+
+    const offset = (currentPage - 1) * ITEMS_PER_PAGE;
+
   try {
     const { rows } = await sql<FormattedCustomersTable>`
       SELECT
@@ -232,6 +236,9 @@ export async function fetchAllCustomers() {
         COALESCE(SUM(CASE WHEN i.status = 'paid' THEN i.amount ELSE 0 END), 0)::text AS total_paid
       FROM customers c
       LEFT JOIN invoices i ON c.id = i.customer_id
+      WHERE
+        c.name ILIKE ${`%${query}%`} OR
+        c.email ILIKE ${`%${query}%`}
       GROUP BY c.id, c.name, c.email, c.image_url
       ORDER BY c.name;
     `;
